@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Summary - Student</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Your Monthly Summary - <%= month %>/<%= year %></h1>
+    <p><a href="/student">Back</a> | <a href="/logout">Logout</a></p>
+    <ul>
+      <li>Presents: <%= row.presents %></li>
+      <li>Absents: <%= row.absents %></li>
+    </ul>
+  </div>
+</body>
+</html>

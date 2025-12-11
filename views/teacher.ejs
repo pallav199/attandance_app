@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teacher - Attendance</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Teacher Dashboard</h1>
+    <p><a href="/summary">Monthly Summary</a> | <a href="/logout">Logout</a></p>
+  <form method="post" action="/teacher/mark">
+      <label>Date<br/><input type="date" name="date" value="<%= new Date().toISOString().slice(0,10) %>" required /></label>
+      <table>
+        <thead><tr><th>Student</th><th>Status</th></tr></thead>
+        <tbody>
+          <% students.forEach(s => { %>
+            <tr>
+              <td><%= s.name %></td>
+              <td>
+                <label><input type="radio" name="statuses[<%= s.student_id %>]" value="present" checked /> Present</label>
+                <label><input type="radio" name="statuses[<%= s.student_id %>]" value="absent" /> Absent</label>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <% if (canMark) { %>
+        <button type="submit">Save Attendance</button>
+      <% } else { %>
+        <p><em>Read-only view — log in as a teacher to mark attendance.</em></p>
+      <% } %>
+    </form>
+  </div>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Attendance</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Admin Dashboard</h1>
+    <p><a href="/logout">Logout</a></p>
+    <% if (message) { %>
+      <p class="info"><%= message %></p>
+    <% } %>
+    <section>
+      <h2>Upload Students (Excel)</h2>
+      <form method="post" action="/admin/upload" enctype="multipart/form-data">
+        <input type="file" name="students" accept=".xlsx,.xls,.csv" required />
+        <button type="submit">Upload</button>
+      </form>
+      <p><a href="/download-sample">Download sample CSV</a></p>
+    </section>
+
+    <section>
+      <h2>Uploaded Students (<%= students.length %>)</h2>
+      <% if (students && students.length) { %>
+        <div class="admin-actions">
+          <form id="deleteAllForm" method="post" action="/admin/delete-all-students" onsubmit="return confirmDelete()">
+            <button type="submit" class="btn-danger">Delete All Students</button>
+          </form>
+          <p class="warning-text">⚠️ Warning: This will permanently delete all students and their attendance records!</p>
+        </div>
+        <table>
+          <thead><tr><th>Student ID</th><th>Name</th></tr></thead>
+          <tbody>
+            <% students.forEach(s => { %>
+              <tr><td><%= s.student_id %></td><td><%= s.name %></td></tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } else { %>
+        <p>No students uploaded yet.</p>
+      <% } %>
+      <p>To mark attendance, log in as a <strong>teacher</strong> (teacher/teacher123) and open <a href="/teacher">Teacher Dashboard</a>.</p>
+    </section>
+  </div>
+
+  <script>
+    function confirmDelete() {
+      const studentCount = <%= students.length %>;
+      const message = `Are you sure you want to delete ALL ${studentCount} students and their attendance records?\n\nThis action CANNOT be undone!\n\nType "DELETE" to confirm:`;
+      const confirmation = prompt(message);
+
+      if (confirmation === 'DELETE') {
+        return confirm('Final confirmation: Delete all students and attendance records?');
+      } else {
+        alert('Deletion cancelled. You must type "DELETE" exactly to confirm.');
+        return false;
+      }
+    }
+  </script>
+</body>
+</html>

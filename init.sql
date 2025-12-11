@@ -1,0 +1,24 @@
+PRAGMA foreign_keys = ON;
+
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL,
+  linked_id TEXT
+);
+
+CREATE TABLE IF NOT EXISTS students (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS attendance (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id TEXT NOT NULL,
+  date TEXT NOT NULL,
+  status TEXT NOT NULL,
+  UNIQUE(student_id, date),
+  FOREIGN KEY(student_id) REFERENCES students(student_id) ON DELETE CASCADE
+);

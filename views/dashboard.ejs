@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - Attendance</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body data-canmark="<%= canMark ? '1' : '0' %>">
+  <div class="container">
+    <h1>Dashboard</h1>
+    <p><a href="/logout">Logout</a></p>
+
+    <% if (students && students.length) { %>
+      <div class="dashboard-layout">
+        <!-- Calendar Section -->
+        <div class="calendar-section">
+          <div class="calendar">
+            <% 
+              const selectedDateObj = new Date(selectedDate || new Date().toISOString().slice(0,10));
+              const year = selectedDateObj.getFullYear();
+              const month = selectedDateObj.getMonth();
+              const firstDay = new Date(year, month, 1);
+              const lastDay = new Date(year, month + 1, 0);
+              const daysInMonth = lastDay.getDate();
+              const startingDayOfWeek = firstDay.getDay();
+              const monthName = firstDay.toLocaleString('default', { month: 'long', year: 'numeric' });
+            %>
+            <div class="calendar-header">
+              <div class="calendar-selectors">
+                <label>Month:
+                  <select id="monthSelect" onchange="navigateToDate()">
+                    <% for (let m = 0; m < 12; m++) { %>
+                      <option value="<%= m %>" <%= m === month ? 'selected' : '' %>>
+                        <%= new Date(year, m, 1).toLocaleString('default', { month: 'long' }) %>
+                      </option>
+                    <% } %>
+                  </select>
+                </label>
+                <label>Year:
+                  <select id="yearSelect" onchange="navigateToDate()">
+                    <% for (let y = year - 5; y <= year + 5; y++) { %>
+                      <option value="<%= y %>" <%= y === year ? 'selected' : '' %>><%= y %></option>
+                    <% } %>
+                  </select>
+                </label>
+              </div>
+            </div>
+            <table class="calendar-table">
+              <thead>
+                <tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr>
+              </thead>
+              <tbody>
+                <% 
+                  let dateCounter = 1;
+                  for (let week = 0; week < 6; week++) {
+                %>
+                  <tr>
+                    <% 
+                      for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
+                        const cellIndex = week * 7 + dayOfWeek;
+                        const dayNum = cellIndex - startingDayOfWeek + 1;
+                        if (dayNum > 0 && dayNum <= daysInMonth) {
+                          const dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(dayNum).padStart(2, '0');
+                          const isSelected = dateStr === selectedDate;
+                    %>
+                      <td><a href="?date=<%= dateStr %>" class="<%= isSelected ? 'selected-date' : '' %>"><%= dayNum %></a></td>
+                    <% 
+                        } else {
+                    %>
+                      <td class="empty"></td>
+                    <% 
+                        }
+                      }
+                    %>
+                  </tr>
+                <% 
+                  }
+                %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Summary Section -->
+        <div class="summary-section">
+          <div class="summary-card">
+            <h3>Attendance Summary</h3>
+            <p class="summary-date"><strong>Date:</strong> <span id="summaryDate"><%= selectedDate %></span></p>
+            <div class="summary-stats">
+              <div class="stat-box present-box">
+                <div class="stat-label">Present</div>
+                <div class="stat-count" id="presentCount">0</div>
+              </div>
+              <div class="stat-box absent-box">
+                <div class="stat-label">Absent</div>
+                <div class="stat-count" id="absentCount">0</div>
+              </div>
+              <div class="stat-box total-box">
+                <div class="stat-label">Total</div>
+                <div class="stat-count" id="totalCount"><%= pagination.totalStudents %></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagination Info -->
+      <% if (pagination && pagination.totalStudents > 0) { %>
+        <div class="pagination-info">
+          <p>Showing students <%= pagination.startIndex %> to <%= pagination.endIndex %> of <%= pagination.totalStudents %> total</p>
+        </div>
+      <% } %>
+
+      <!-- Pagination Controls -->
+      <% if (pagination && pagination.totalPages > 1) { %>
+        <div class="pagination-controls">
+          <%
+            const currentPage = pagination.currentPage;
+            const totalPages = pagination.totalPages;
+            const currentDate = selectedDate || new Date().toISOString().slice(0,10);
+          %>
+          <% if (currentPage > 1) { %>
+            <a href="?date=<%= currentDate %>&page=<%= currentPage - 1 %>" class="pagination-btn">Previous</a>
+          <% } else { %>
+            <span class="pagination-btn disabled">Previous</span>
+          <% } %>
+
+          <span class="pagination-current">Page <%= currentPage %> of <%= totalPages %></span>
+
+          <% if (currentPage < totalPages) { %>
+            <a href="?date=<%= currentDate %>&page=<%= currentPage + 1 %>" class="pagination-btn">Next</a>
+          <% } else { %>
+            <span class="pagination-btn disabled">Next</span>
+          <% } %>
+        </div>
+      <% } %>
+
+      <form method="post" action="/teacher/mark">
+        <input type="hidden" name="date" value="<%= selectedDate || new Date().toISOString().slice(0,10) %>" />
+        <table>
+          <thead><tr><th>Student</th><th>Status</th></tr></thead>
+          <tbody>
+            <% students.forEach(s => { %>
+              <tr>
+                <td><a href="#" class="student-name" data-student-id="<%= s.student_id %>" data-student-name="<%= s.name %>" data-status="<%= (attendanceMap && attendanceMap[s.student_id]) || '' %>"><%= s.name %></a></td>
+                <td>
+                  <% const status = (attendanceMap && attendanceMap[s.student_id]); %>
+                  <label><input type="radio" name="statuses[<%= s.student_id %>]" value="present" <%= status === 'present' ? 'checked' : '' %> <%= canMark ? '' : 'disabled' %>/> Present</label>
+                  <label><input type="radio" name="statuses[<%= s.student_id %>]" value="absent" <%= status === 'absent' ? 'checked' : '' %> <%= canMark ? '' : 'disabled' %>/> Absent</label>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+        <% if (canMark) { %>
+          <button type="submit">Save Attendance</button>
+        <% } else { %>
+          <p><em>Read-only view — log in as a teacher to mark attendance.</em></p>
+        <% } %>
+      </form>
+
+      <!-- Pagination Controls (Bottom) -->
+      <% if (pagination && pagination.totalPages > 1) { %>
+        <div class="pagination-controls">
+          <%
+            const currentPage = pagination.currentPage;
+            const totalPages = pagination.totalPages;
+            const currentDate = selectedDate || new Date().toISOString().slice(0,10);
+          %>
+          <% if (currentPage > 1) { %>
+            <a href="?date=<%= currentDate %>&page=<%= currentPage - 1 %>" class="pagination-btn">Previous</a>
+          <% } else { %>
+            <span class="pagination-btn disabled">Previous</span>
+          <% } %>
+
+          <span class="pagination-current">Page <%= currentPage %> of <%= totalPages %></span>
+
+          <% if (currentPage < totalPages) { %>
+            <a href="?date=<%= currentDate %>&page=<%= currentPage + 1 %>" class="pagination-btn">Next</a>
+          <% } else { %>
+            <span class="pagination-btn disabled">Next</span>
+          <% } %>
+        </div>
+      <% } %>
+    <% } else { %>
+      <p>No students available. Upload via Admin.</p>
+    <% } %>
+  </div>
+  <!-- Modal for Monthly Summary -->
+  <div id="monthlySummaryModal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close">&times;</span>
+      <h2 id="modalStudentName"></h2>
+      <h3 id="modalMonth"></h3>
+      <div class="modal-stats">
+        <div class="modal-stat-box present-box">
+          <div class="stat-label">Present</div>
+          <div class="stat-count" id="modalPresentCount">0</div>
+        </div>
+        <div class="modal-stat-box absent-box">
+          <div class="stat-label">Absent</div>
+          <div class="stat-count" id="modalAbsentCount">0</div>
+        </div>
+        <div class="modal-stat-box total-box">
+          <div class="stat-label">Total Days Marked</div>
+          <div class="stat-count" id="modalTotalMarked">0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Navigate to selected month/year
+    function navigateToDate() {
+      const monthSelect = document.getElementById('monthSelect');
+      const yearSelect = document.getElementById('yearSelect');
+      const month = parseInt(monthSelect.value);
+      const year = parseInt(yearSelect.value);
+      const date = year + '-' + String(month + 1).padStart(2, '0') + '-01';
+      window.location.href = '?date=' + date;
+    }
+
+    // Update attendance summary counts
+    function updateSummary() {
+      const presentRadios = document.querySelectorAll('input[name^="statuses["][value="present"]:checked');
+      const absentRadios = document.querySelectorAll('input[name^="statuses["][value="absent"]:checked');
+      const presentCount = presentRadios.length;
+      const absentCount = absentRadios.length;
+
+      document.getElementById('presentCount').textContent = presentCount;
+      document.getElementById('absentCount').textContent = absentCount;
+    }
+
+    // Show monthly summary modal
+    function showMonthlySummaryModal(data) {
+      const modal = document.getElementById('monthlySummaryModal');
+      document.getElementById('modalStudentName').textContent = data.student.name;
+      document.getElementById('modalMonth').textContent = data.month;
+      document.getElementById('modalPresentCount').textContent = data.summary.present;
+      document.getElementById('modalAbsentCount').textContent = data.summary.absent;
+      document.getElementById('modalTotalMarked').textContent = data.summary.totalMarked;
+      modal.style.display = 'block';
+    }
+
+    // clicking a student name shows monthly summary (teachers only)
+    document.addEventListener('DOMContentLoaded', function () {
+      const selectedDate = '<%= selectedDate || new Date().toISOString().slice(0,10) %>';
+      document.getElementById('summaryDate').textContent = selectedDate;
+      const canMark = document.body.dataset.canmark === '1';
+
+      // Initial summary update
+      updateSummary();
+
+      // Setup modal close functionality
+      const modal = document.getElementById('monthlySummaryModal');
+      const closeBtn = document.querySelector('.modal-close');
+      closeBtn.onclick = function() {
+        modal.style.display = 'none';
+      };
+      window.onclick = function(event) {
+        if (event.target == modal) {
+          modal.style.display = 'none';
+        }
+      };
+
+      document.querySelectorAll('.student-name').forEach(a => {
+        a.addEventListener('click', async function (e) {
+          e.preventDefault();
+
+          const studentId = this.dataset.studentId;
+          const name = this.dataset.studentName;
+
+          if (!canMark) {
+            // show current status for non-teachers
+            const status = this.dataset.status || 'no record';
+            alert(name + ' on ' + selectedDate + ': ' + (status || 'no record'));
+            return;
+          }
+
+          // For teachers: Show monthly summary in a modal
+          try {
+            const response = await fetch(`/api/student-monthly-summary?studentId=${encodeURIComponent(studentId)}&date=${selectedDate}`);
+            if (!response.ok) throw new Error('Failed to fetch summary');
+
+            const data = await response.json();
+
+            // Show modal with monthly summary
+            showMonthlySummaryModal(data);
+          } catch (err) {
+            console.error('Error fetching monthly summary:', err);
+            alert('Error loading monthly summary');
+          }
+        });
+      });
+
+      // Radio button change listener for updating summary counts
+      document.querySelectorAll('input[type="radio"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+          updateSummary();
+        });
+      });
+    });
+  </script>
+</body>
+</html>
