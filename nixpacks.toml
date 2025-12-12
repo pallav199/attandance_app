@@ -1,0 +1,11 @@
+[phases.setup]
+nixPkgs = ["nodejs"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["echo 'Build complete - v2.0.0'"]
+
+[start]
+cmd = "npm start"
