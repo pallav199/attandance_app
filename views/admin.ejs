@@ -1,69 +1,152 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin - Attendance</title>
+  <meta name="description" content="AttendancePro™ Admin Dashboard - Enterprise Management" />
+  <title>Admin Dashboard | AttendancePro™ Management System</title>
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
+
 <body>
   <div class="container">
     <div class="app-header">
-      <h1>👨‍💼 ADMIN DASHBOARD</h1>
+      <h1>👨‍💼 ADMIN CONTROL CENTER</h1>
     </div>
-    <p style="text-align: center;">
-      <a href="/change-password" style="margin-right: 15px;">🔑 Change Password</a>
-      <a href="/logout">🚪 Logout</a>
-    </p>
-    <% if (message) { %>
-      <p class="info"><%= message %></p>
-    <% } %>
-    <section>
-      <h2>Upload Students (Excel)</h2>
-      <form method="post" action="/admin/upload" enctype="multipart/form-data">
-        <input type="file" name="students" accept=".xlsx,.xls,.csv" required />
-        <button type="submit">Upload</button>
-      </form>
-      <p><a href="/download-sample">Download sample CSV</a></p>
-    </section>
 
-    <section>
-      <h2>Uploaded Students (<%= students.length %>)</h2>
-      <% if (students && students.length) { %>
-        <div class="admin-actions">
-          <form id="deleteAllForm" method="post" action="/admin/delete-all-students" onsubmit="return confirmDelete()">
-            <button type="submit" class="btn-danger">Delete All Students</button>
-          </form>
-          <p class="warning-text">⚠️ Warning: This will permanently delete all students and their attendance records!</p>
-        </div>
-        <table>
-          <thead><tr><th>Student ID</th><th>Name</th></tr></thead>
-          <tbody>
-            <% students.forEach(s => { %>
-              <tr><td><%= s.student_id %></td><td><%= s.name %></td></tr>
-            <% }) %>
-          </tbody>
-        </table>
-      <% } else { %>
-        <p>No students uploaded yet.</p>
+    <div class="nav-links" style="text-align: center; margin-bottom: 30px;">
+      <a href="/teacher" style="margin-right: 15px;">
+        📊 View Attendance
+      </a>
+      <a href="/change-password" style="margin-right: 15px;">
+        🔑 Change Password
+      </a>
+      <a href="/logout">
+        🚪 Sign Out
+      </a>
+    </div>
+
+    <% if (message) { %>
+      <p class="info">✅ <%= message %>
+      </p>
       <% } %>
-      <p>To mark attendance, log in as a <strong>teacher</strong> (teacher/teacher123) and open <a href="/teacher">Teacher Dashboard</a>.</p>
-    </section>
+
+        <section>
+          <h2>📤 Upload Student Records</h2>
+          <p style="color: #64748b; margin-bottom: 20px;">Upload an Excel or CSV file containing student data. The file
+            should have columns for <strong>student_id</strong> and <strong>name</strong>.</p>
+          <form method="post" action="/admin/upload" enctype="multipart/form-data" id="uploadForm">
+            <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+              <input type="file" name="students" accept=".xlsx,.xls,.csv" required />
+              <button type="submit" id="uploadBtn">
+                <span style="display: flex; align-items: center; gap: 8px;">
+                  📁 Upload File
+                </span>
+              </button>
+            </div>
+          </form>
+          <div
+            style="margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px;">
+            <p style="margin: 0; color: #0369a1;">
+              💡 <strong>Need a template?</strong> <a href="/download-sample" style="color: #0284c7;">Download sample
+                CSV</a> to see the required format.
+            </p>
+          </div>
+        </section>
+
+        <section>
+          <h2>👥 Student Registry (<%= students.length %> Students)</h2>
+          <% if (students && students.length) { %>
+            <div class="admin-actions">
+              <div
+                style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between;">
+                <div>
+                  <h3 style="margin: 0 0 10px 0; color: #92400e;">⚠️ Danger Zone</h3>
+                  <p class="warning-text" style="margin: 0;">This will permanently delete all students and their
+                    attendance records!</p>
+                </div>
+                <form id="deleteAllForm" method="post" action="/admin/delete-all-students"
+                  onsubmit="return confirmDelete()">
+                  <button type="submit" class="btn-danger">
+                    <span style="display: flex; align-items: center; gap: 8px;">
+                      🗑️ Delete All Students
+                    </span>
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 30%;">🆔 Student ID</th>
+                  <th style="width: 70%;">👤 Full Name</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% students.forEach((s, index)=> { %>
+                  <tr style="animation-delay: <%= index * 0.03 %>s">
+                    <td><code
+                        style="background: #f1f5f9; padding: 4px 10px; border-radius: 6px; font-weight: 600;"><%= s.student_id %></code>
+                    </td>
+                    <td>
+                      <%= s.name %>
+                    </td>
+                  </tr>
+                  <% }) %>
+              </tbody>
+            </table>
+            <% } else { %>
+              <div
+                style="text-align: center; padding: 50px 30px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 16px;">
+                <div style="font-size: 60px; margin-bottom: 15px;">📋</div>
+                <h3 style="color: #475569; margin-bottom: 10px;">No Students Uploaded Yet</h3>
+                <p style="color: #64748b; margin: 0;">Upload an Excel or CSV file to add students to the system.</p>
+              </div>
+              <% } %>
+
+                <div
+                  style="margin-top: 25px; padding: 20px; background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 12px;">
+                  <p style="margin: 0; color: #6b21a8;">
+                    📝 <strong>Ready to mark attendance?</strong> Sign in as a <strong>teacher</strong> and open the <a
+                      href="/teacher" style="color: #7c3aed;">Teacher Dashboard</a>.
+                  </p>
+                </div>
+        </section>
+
+        <div class="app-footer">
+          <div style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
+            <span style="font-size: 1.1rem;">🏫 AttendancePro™ Management System</span>
+            <span style="opacity: 0.7; font-size: 0.85rem;">Designed for Teacher Pallavi Pradhan | © 2026 All Rights
+              Reserved</span>
+          </div>
+        </div>
   </div>
 
   <script>
     function confirmDelete() {
       const studentCount = <%= students.length %>;
-      const message = `Are you sure you want to delete ALL ${studentCount} students and their attendance records?\n\nThis action CANNOT be undone!\n\nType "DELETE" to confirm:`;
+      const message = `⚠️ DANGER: You are about to delete ALL ${studentCount} students and their attendance records.\n\nThis action CANNOT be undone!\n\nType "DELETE" to confirm:`;
       const confirmation = prompt(message);
 
       if (confirmation === 'DELETE') {
-        return confirm('Final confirmation: Delete all students and attendance records?');
+        return confirm('🔴 Final confirmation: Are you absolutely sure you want to delete all students and attendance records?');
       } else {
-        alert('Deletion cancelled. You must type "DELETE" exactly to confirm.');
+        alert('❌ Deletion cancelled. You must type "DELETE" exactly to confirm.');
         return false;
       }
     }
+
+    // Add loading state to upload button
+    document.getElementById('uploadForm').addEventListener('submit', function () {
+      const btn = document.getElementById('uploadBtn');
+      btn.innerHTML = '<span style="display: flex; align-items: center; gap: 8px;">⏳ Uploading...</span>';
+      btn.disabled = true;
+    });
   </script>
 </body>
+
 </html>

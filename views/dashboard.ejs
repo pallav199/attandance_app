@@ -1,197 +1,307 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard - Attendance</title>
+  <meta name="description" content="AttendancePro™ Dashboard - Enterprise Attendance Management" />
+  <title>Dashboard | AttendancePro™ Management System</title>
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
+
 <body data-canmark="<%= canMark ? '1' : '0' %>">
   <div class="container">
     <div class="app-header">
       <h1>📊 ATTENDANCE DASHBOARD</h1>
     </div>
-    <p style="text-align: center;">
-      <a href="/change-password" style="margin-right: 15px;">🔑 Change Password</a>
-      <a href="/logout">🚪 Logout</a>
-    </p>
+
+    <div class="nav-links" style="text-align: center; margin-bottom: 30px;">
+      <a href="/change-password" style="margin-right: 15px;">
+        🔑 Change Password
+      </a>
+      <a href="/logout">
+        🚪 Sign Out
+      </a>
+    </div>
 
     <% if (students && students.length) { %>
       <div class="dashboard-layout">
         <!-- Calendar Section -->
         <div class="calendar-section">
           <div class="calendar">
-            <% 
-              const selectedDateObj = new Date(selectedDate || new Date().toISOString().slice(0,10));
-              const year = selectedDateObj.getFullYear();
-              const month = selectedDateObj.getMonth();
-              const firstDay = new Date(year, month, 1);
-              const lastDay = new Date(year, month + 1, 0);
-              const daysInMonth = lastDay.getDate();
-              const startingDayOfWeek = firstDay.getDay();
-              const monthName = firstDay.toLocaleString('default', { month: 'long', year: 'numeric' });
-            %>
-            <div class="calendar-header">
-              <div class="calendar-selectors">
-                <label>Month:
-                  <select id="monthSelect" onchange="navigateToDate()">
-                    <% for (let m = 0; m < 12; m++) { %>
-                      <option value="<%= m %>" <%= m === month ? 'selected' : '' %>>
-                        <%= new Date(year, m, 1).toLocaleString('default', { month: 'long' }) %>
-                      </option>
-                    <% } %>
-                  </select>
-                </label>
-                <label>Year:
-                  <select id="yearSelect" onchange="navigateToDate()">
-                    <% for (let y = year - 5; y <= year + 5; y++) { %>
-                      <option value="<%= y %>" <%= y === year ? 'selected' : '' %>><%= y %></option>
-                    <% } %>
-                  </select>
-                </label>
+            <% const selectedDateObj=new Date(selectedDate || new Date().toISOString().slice(0,10)); const
+              year=selectedDateObj.getFullYear(); const month=selectedDateObj.getMonth(); const firstDay=new Date(year,
+              month, 1); const lastDay=new Date(year, month + 1, 0); const daysInMonth=lastDay.getDate(); const
+              startingDayOfWeek=firstDay.getDay(); const monthName=firstDay.toLocaleString('default', { month: 'long' ,
+              year: 'numeric' }); %>
+              <div class="calendar-header">
+                <div class="calendar-selectors">
+                  <label>📅 Month:
+                    <select id="monthSelect" onchange="navigateToDate()">
+                      <% for (let m=0; m < 12; m++) { %>
+                        <option value="<%= m %>" <%=m===month ? 'selected' : '' %>>
+                          <%= new Date(year, m, 1).toLocaleString('default', { month: 'long' }) %>
+                        </option>
+                        <% } %>
+                    </select>
+                  </label>
+                  <label>📆 Year:
+                    <select id="yearSelect" onchange="navigateToDate()">
+                      <% for (let y=year - 5; y <=year + 5; y++) { %>
+                        <option value="<%= y %>" <%=y===year ? 'selected' : '' %>><%= y %>
+                        </option>
+                        <% } %>
+                    </select>
+                  </label>
+                </div>
               </div>
-            </div>
-            <table class="calendar-table">
-              <thead>
-                <tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr>
-              </thead>
-              <tbody>
-                <% 
-                  let dateCounter = 1;
-                  for (let week = 0; week < 6; week++) {
-                %>
+              <table class="calendar-table">
+                <thead>
                   <tr>
-                    <% 
-                      for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
-                        const cellIndex = week * 7 + dayOfWeek;
-                        const dayNum = cellIndex - startingDayOfWeek + 1;
-                        if (dayNum > 0 && dayNum <= daysInMonth) {
-                          const dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(dayNum).padStart(2, '0');
-                          const isSelected = dateStr === selectedDate;
-                    %>
-                      <td><a href="?date=<%= dateStr %>" class="<%= isSelected ? 'selected-date' : '' %>"><%= dayNum %></a></td>
-                    <% 
-                        } else {
-                    %>
-                      <td class="empty"></td>
-                    <% 
-                        }
-                      }
-                    %>
+                    <th>Sun</th>
+                    <th>Mon</th>
+                    <th>Tue</th>
+                    <th>Wed</th>
+                    <th>Thu</th>
+                    <th>Fri</th>
+                    <th>Sat</th>
                   </tr>
-                <% 
-                  }
-                %>
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  <% let dateCounter=1; for (let week=0; week < 6; week++) { %>
+                    <tr>
+                      <% for (let dayOfWeek=0; dayOfWeek < 7; dayOfWeek++) { const cellIndex=week * 7 + dayOfWeek; const
+                        dayNum=cellIndex - startingDayOfWeek + 1; if (dayNum> 0 && dayNum <= daysInMonth) { const
+                          dateStr=year + '-' + String(month + 1).padStart(2, '0' ) + '-' +
+                          String(dayNum).padStart(2, '0' ); const isSelected=dateStr===selectedDate; %>
+                          <td><a href="?date=<%= dateStr %>" class="<%= isSelected ? 'selected-date' : '' %>">
+                              <%= dayNum %>
+                            </a></td>
+                          <% } else { %>
+                            <td class="empty"></td>
+                            <% } } %>
+                    </tr>
+                    <% } %>
+                </tbody>
+              </table>
           </div>
         </div>
 
         <!-- Summary Section -->
         <div class="summary-section">
           <div class="summary-card">
-            <h3>Attendance Summary</h3>
-            <p class="summary-date"><strong>Date:</strong> <span id="summaryDate"><%= selectedDate %></span></p>
+            <h3>📈 Attendance Summary</h3>
+            <p class="summary-date"><strong>Selected Date:</strong> <span id="summaryDate">
+                <%= selectedDate %>
+              </span></p>
             <div class="summary-stats">
               <div class="stat-box present-box">
-                <div class="stat-label">Present</div>
+                <div class="stat-label">✅ Present</div>
                 <div class="stat-count" id="presentCount">0</div>
               </div>
               <div class="stat-box absent-box">
-                <div class="stat-label">Absent</div>
+                <div class="stat-label">❌ Absent</div>
                 <div class="stat-count" id="absentCount">0</div>
               </div>
               <div class="stat-box total-box">
-                <div class="stat-label">Total</div>
-                <div class="stat-count" id="totalCount"><%= pagination.totalStudents %></div>
+                <div class="stat-label">👥 Total</div>
+                <div class="stat-count" id="totalCount">
+                  <%= pagination.totalStudents %>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Pagination Info -->
-      <% if (pagination && pagination.totalStudents > 0) { %>
-        <div class="pagination-info">
-          <p>Showing students <%= pagination.startIndex %> to <%= pagination.endIndex %> of <%= pagination.totalStudents %> total</p>
+      <!-- Premium Report Export Section (Teachers Only) -->
+      <% if (canMark) { %>
+        <div class="report-export-section">
+          <div class="report-card">
+            <div class="report-header">
+              <div class="report-icon">📊</div>
+              <div>
+                <h3>Export Attendance Report</h3>
+                <p>Download professional PDF report for any date range</p>
+              </div>
+            </div>
+            <div class="report-form">
+              <div class="date-range-picker">
+                <div class="date-field">
+                  <label for="reportStartDate">
+                    <span class="date-label-icon">📅</span> From Date
+                  </label>
+                  <input type="date" id="reportStartDate" class="date-input" />
+                </div>
+                <div class="date-separator">
+                  <span>→</span>
+                </div>
+                <div class="date-field">
+                  <label for="reportEndDate">
+                    <span class="date-label-icon">📅</span> To Date
+                  </label>
+                  <input type="date" id="reportEndDate" class="date-input" />
+                </div>
+              </div>
+              <button type="button" id="exportBtn" class="export-btn" onclick="exportAttendanceReport()">
+                <span class="export-btn-content">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  Download PDF Report
+                </span>
+              </button>
+            </div>
+            <div class="report-info">
+              <div class="info-item">
+                <span class="info-icon">✅</span>
+                <span>Includes all students' attendance summary</span>
+              </div>
+              <div class="info-item">
+                <span class="info-icon">📈</span>
+                <span>Attendance percentage calculated automatically</span>
+              </div>
+              <div class="info-item">
+                <span class="info-icon">📄</span>
+                <span>Professional PDF format ready for printing</span>
+              </div>
+            </div>
+          </div>
         </div>
-      <% } %>
-
-      <!-- Pagination Controls -->
-      <% if (pagination && pagination.totalPages > 1) { %>
-        <div class="pagination-controls">
-          <%
-            const currentPage = pagination.currentPage;
-            const totalPages = pagination.totalPages;
-            const currentDate = selectedDate || new Date().toISOString().slice(0,10);
-          %>
-          <% if (currentPage > 1) { %>
-            <a href="?date=<%= currentDate %>&page=<%= currentPage - 1 %>" class="pagination-btn">Previous</a>
-          <% } else { %>
-            <span class="pagination-btn disabled">Previous</span>
-          <% } %>
-
-          <span class="pagination-current">Page <%= currentPage %> of <%= totalPages %></span>
-
-          <% if (currentPage < totalPages) { %>
-            <a href="?date=<%= currentDate %>&page=<%= currentPage + 1 %>" class="pagination-btn">Next</a>
-          <% } else { %>
-            <span class="pagination-btn disabled">Next</span>
-          <% } %>
-        </div>
-      <% } %>
-
-      <form method="post" action="/teacher/mark">
-        <input type="hidden" name="date" value="<%= selectedDate || new Date().toISOString().slice(0,10) %>" />
-        <table>
-          <thead><tr><th>Student</th><th>Status</th></tr></thead>
-          <tbody>
-            <% students.forEach(s => { %>
-              <tr>
-                <td><a href="#" class="student-name" data-student-id="<%= s.student_id %>" data-student-name="<%= s.name %>" data-status="<%= (attendanceMap && attendanceMap[s.student_id]) || '' %>"><%= s.name %></a></td>
-                <td>
-                  <% const status = (attendanceMap && attendanceMap[s.student_id]); %>
-                  <label><input type="radio" name="statuses[<%= s.student_id %>]" value="present" <%= status === 'present' ? 'checked' : '' %> <%= canMark ? '' : 'disabled' %>/> Present</label>
-                  <label><input type="radio" name="statuses[<%= s.student_id %>]" value="absent" <%= status === 'absent' ? 'checked' : '' %> <%= canMark ? '' : 'disabled' %>/> Absent</label>
-                </td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
-        <% if (canMark) { %>
-          <button type="submit">Save Attendance</button>
-        <% } else { %>
-          <p><em>Read-only view — log in as a teacher to mark attendance.</em></p>
         <% } %>
-      </form>
 
-      <!-- Pagination Controls (Bottom) -->
-      <% if (pagination && pagination.totalPages > 1) { %>
-        <div class="pagination-controls">
-          <%
-            const currentPage = pagination.currentPage;
-            const totalPages = pagination.totalPages;
-            const currentDate = selectedDate || new Date().toISOString().slice(0,10);
-          %>
-          <% if (currentPage > 1) { %>
-            <a href="?date=<%= currentDate %>&page=<%= currentPage - 1 %>" class="pagination-btn">Previous</a>
-          <% } else { %>
-            <span class="pagination-btn disabled">Previous</span>
-          <% } %>
+          <!-- Pagination Info -->
+          <% if (pagination && pagination.totalStudents> 0) { %>
+            <div class="pagination-info">
+              <p>📋 Showing students <strong>
+                  <%= pagination.startIndex %>
+                </strong> to <strong>
+                  <%= pagination.endIndex %>
+                </strong> of <strong>
+                  <%= pagination.totalStudents %>
+                </strong> total</p>
+            </div>
+            <% } %>
 
-          <span class="pagination-current">Page <%= currentPage %> of <%= totalPages %></span>
+              <!-- Pagination Controls -->
+              <% if (pagination && pagination.totalPages> 1) { %>
+                <div class="pagination-controls">
+                  <% const currentPage=pagination.currentPage; const totalPages=pagination.totalPages; const
+                    currentDate=selectedDate || new Date().toISOString().slice(0,10); %>
+                    <% if (currentPage> 1) { %>
+                      <a href="?date=<%= currentDate %>&page=<%= currentPage - 1 %>" class="pagination-btn">←
+                        Previous</a>
+                      <% } else { %>
+                        <span class="pagination-btn disabled">← Previous</span>
+                        <% } %>
 
-          <% if (currentPage < totalPages) { %>
-            <a href="?date=<%= currentDate %>&page=<%= currentPage + 1 %>" class="pagination-btn">Next</a>
-          <% } else { %>
-            <span class="pagination-btn disabled">Next</span>
-          <% } %>
-        </div>
-      <% } %>
-    <% } else { %>
-      <p>No students available. Upload via Admin.</p>
-    <% } %>
+                          <span class="pagination-current">Page <%= currentPage %> of <%= totalPages %></span>
+
+                          <% if (currentPage < totalPages) { %>
+                            <a href="?date=<%= currentDate %>&page=<%= currentPage + 1 %>" class="pagination-btn">Next
+                              →</a>
+                            <% } else { %>
+                              <span class="pagination-btn disabled">Next →</span>
+                              <% } %>
+                </div>
+                <% } %>
+
+                  <form method="post" action="/teacher/mark" id="attendanceForm">
+                    <input type="hidden" name="date"
+                      value="<%= selectedDate || new Date().toISOString().slice(0,10) %>" />
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>👤 Student Name</th>
+                          <th>📊 Attendance Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% students.forEach((s, index)=> { %>
+                          <tr style="animation-delay: <%= index * 0.05 %>s">
+                            <td><a href="#" class="student-name" data-student-id="<%= s.student_id %>"
+                                data-student-name="<%= s.name %>"
+                                data-status="<%= (attendanceMap && attendanceMap[s.student_id]) || '' %>">
+                                <%= s.name %>
+                              </a></td>
+                            <td>
+                              <% const status=(attendanceMap && attendanceMap[s.student_id]); %>
+                                <label><input type="radio" name="statuses[<%= s.student_id %>]" value="present"
+                                    <%=status==='present' ? 'checked' : '' %>
+                                  <%= canMark ? '' : 'disabled' %>/> Present
+                                </label>
+                                <label><input type="radio" name="statuses[<%= s.student_id %>]" value="absent"
+                                    <%=status==='absent' ? 'checked' : '' %>
+                                  <%= canMark ? '' : 'disabled' %>/> Absent
+                                </label>
+                            </td>
+                          </tr>
+                          <% }) %>
+                      </tbody>
+                    </table>
+                    <% if (canMark) { %>
+                      <div style="margin-top: 25px; text-align: center;">
+                        <button type="submit" id="saveBtn">
+                          <span style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            💾 Save Attendance
+                          </span>
+                        </button>
+                      </div>
+                      <% } else { %>
+                        <div
+                          style="margin-top: 25px; padding: 20px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; text-align: center;">
+                          <p style="color: #64748b; margin: 0;">🔒 <em>Read-only view — Sign in as a teacher to mark
+                              attendance.</em></p>
+                        </div>
+                        <% } %>
+                  </form>
+
+                  <!-- Pagination Controls (Bottom) -->
+                  <% if (pagination && pagination.totalPages> 1) { %>
+                    <div class="pagination-controls">
+                      <% const currentPage=pagination.currentPage; const totalPages=pagination.totalPages; const
+                        currentDate=selectedDate || new Date().toISOString().slice(0,10); %>
+                        <% if (currentPage> 1) { %>
+                          <a href="?date=<%= currentDate %>&page=<%= currentPage - 1 %>" class="pagination-btn">←
+                            Previous</a>
+                          <% } else { %>
+                            <span class="pagination-btn disabled">← Previous</span>
+                            <% } %>
+
+                              <span class="pagination-current">Page <%= currentPage %> of <%= totalPages %></span>
+
+                              <% if (currentPage < totalPages) { %>
+                                <a href="?date=<%= currentDate %>&page=<%= currentPage + 1 %>"
+                                  class="pagination-btn">Next
+                                  →</a>
+                                <% } else { %>
+                                  <span class="pagination-btn disabled">Next →</span>
+                                  <% } %>
+                    </div>
+                    <% } %>
+                      <% } else { %>
+                        <div
+                          style="text-align: center; padding: 60px 30px; background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1);">
+                          <div style="font-size: 80px; margin-bottom: 20px;">📚</div>
+                          <h2 style="color: #334155; margin-bottom: 15px;">No Students Available</h2>
+                          <p style="color: #64748b;">Please upload students via the Admin Dashboard to get started.</p>
+                        </div>
+                        <% } %>
+
+                          <div class="app-footer">
+                            <div style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
+                              <span style="font-size: 1.1rem;">🏫 AttendancePro™ Management System</span>
+                              <span style="opacity: 0.7; font-size: 0.85rem;">Designed for Teacher Pallavi Pradhan | ©
+                                2026
+                                All Rights Reserved</span>
+                            </div>
+                          </div>
   </div>
+
   <!-- Modal for Monthly Summary -->
   <div id="monthlySummaryModal" class="modal">
     <div class="modal-content">
@@ -200,15 +310,15 @@
       <h3 id="modalMonth"></h3>
       <div class="modal-stats">
         <div class="modal-stat-box present-box">
-          <div class="stat-label">Present</div>
+          <div class="stat-label">✅ Present</div>
           <div class="stat-count" id="modalPresentCount">0</div>
         </div>
         <div class="modal-stat-box absent-box">
-          <div class="stat-label">Absent</div>
+          <div class="stat-label">❌ Absent</div>
           <div class="stat-count" id="modalAbsentCount">0</div>
         </div>
         <div class="modal-stat-box total-box">
-          <div class="stat-label">Total Days Marked</div>
+          <div class="stat-label">📅 Total Days</div>
           <div class="stat-count" id="modalTotalMarked">0</div>
         </div>
       </div>
@@ -260,10 +370,10 @@
       // Setup modal close functionality
       const modal = document.getElementById('monthlySummaryModal');
       const closeBtn = document.querySelector('.modal-close');
-      closeBtn.onclick = function() {
+      closeBtn.onclick = function () {
         modal.style.display = 'none';
       };
-      window.onclick = function(event) {
+      window.onclick = function (event) {
         if (event.target == modal) {
           modal.style.display = 'none';
         }
@@ -301,11 +411,89 @@
 
       // Radio button change listener for updating summary counts
       document.querySelectorAll('input[type="radio"]').forEach(radio => {
-        radio.addEventListener('change', function() {
+        radio.addEventListener('change', function () {
           updateSummary();
         });
       });
+
+      // Form submit with loading state
+      const form = document.getElementById('attendanceForm');
+      const saveBtn = document.getElementById('saveBtn');
+      if (form && saveBtn) {
+        form.addEventListener('submit', function () {
+          saveBtn.innerHTML = '<span style="display: flex; align-items: center; justify-content: center; gap: 10px;">⏳ Saving...</span>';
+          saveBtn.disabled = true;
+        });
+      }
+
+      // Set default dates for report export
+      const reportStartDate = document.getElementById('reportStartDate');
+      const reportEndDate = document.getElementById('reportEndDate');
+      if (reportStartDate && reportEndDate) {
+        // Default to current month
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        reportStartDate.value = firstDay.toISOString().slice(0, 10);
+        reportEndDate.value = lastDay.toISOString().slice(0, 10);
+      }
     });
+
+    // Export Attendance Report Function
+    function exportAttendanceReport() {
+      const startDate = document.getElementById('reportStartDate').value;
+      const endDate = document.getElementById('reportEndDate').value;
+      const exportBtn = document.getElementById('exportBtn');
+
+      if (!startDate || !endDate) {
+        alert('⚠️ Please select both start and end dates');
+        return;
+      }
+
+      if (new Date(startDate) > new Date(endDate)) {
+        alert('⚠️ Start date cannot be after end date');
+        return;
+      }
+
+      // Show loading state
+      const originalContent = exportBtn.innerHTML;
+      exportBtn.innerHTML = '<span class="export-btn-content">⏳ Generating Report...</span>';
+      exportBtn.disabled = true;
+
+      // Trigger download
+      const url = `/api/export-attendance?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
+
+      fetch(url)
+        .then(response => {
+          if (!response.ok) throw new Error('Export failed');
+          return response.blob();
+        })
+        .then(blob => {
+          // Create download link
+          const downloadUrl = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = downloadUrl;
+          a.download = `Attendance_Report_${startDate}_to_${endDate}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(downloadUrl);
+          a.remove();
+
+          // Show success
+          exportBtn.innerHTML = '<span class="export-btn-content">✅ Downloaded!</span>';
+          setTimeout(() => {
+            exportBtn.innerHTML = originalContent;
+            exportBtn.disabled = false;
+          }, 2000);
+        })
+        .catch(error => {
+          console.error('Export error:', error);
+          alert('❌ Error generating report. Please try again.');
+          exportBtn.innerHTML = originalContent;
+          exportBtn.disabled = false;
+        });
+    }
   </script>
 </body>
+
 </html>

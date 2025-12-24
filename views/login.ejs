@@ -1,67 +1,99 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login - Attendance</title>
+  <meta name="description" content="Premium Attendance Management System - Secure Login Portal" />
+  <title>Login | AttendancePro™ - Enterprise Management System</title>
   <link rel="stylesheet" href="/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
+
 <body>
   <div class="container">
     <div class="app-header">
-      <h1>📚 ATTENDANCE APP BY PALLAV PRADHAN</h1>
+      <h1>✨ ATTENDANCE PRO™ MANAGEMENT SYSTEM</h1>
+      <p
+        style="color: rgba(255,255,255,0.9); margin-top: 10px; font-size: 1rem; font-weight: 500; letter-spacing: 1px;">
+        BY PALLAV PRADHAN | VERSION 3.0</p>
     </div>
 
     <div class="login-card">
       <div class="login-header">
         <div class="login-icon">🔐</div>
         <h2>Welcome Back!</h2>
-        <p style="color: #888; font-size: 14px;">Please login to continue</p>
+        <p style="color: #64748b; font-size: 1rem; margin-top: 8px;">Sign in to access your dashboard</p>
       </div>
 
       <% if (error) { %>
-        <p class="error" style="animation: fadeIn 0.5s ease-out;"><%= error %></p>
-      <% } %>
+        <p class="error">
+          <%= error %>
+        </p>
+        <% } %>
 
-      <form method="post" action="/login">
-        <div class="form-group">
-          <label for="username">Username</label>
-          <input
-            type="text"
-            id="username"
-            name="username"
-            class="form-input"
-            placeholder="Enter your username"
-            required
-            autofocus
-          />
-        </div>
+          <form method="post" action="/login" id="loginForm">
+            <div class="form-group">
+              <label for="username">
+                <span style="display: flex; align-items: center; gap: 8px;">
+                  👤 Username
+                </span>
+              </label>
+              <input type="text" id="username" name="username" class="form-input" placeholder="Enter your username"
+                required autofocus autocomplete="username" />
+            </div>
 
-        <div class="form-group">
-          <label for="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            class="form-input"
-            placeholder="Enter your password"
-            required
-          />
-        </div>
+            <div class="form-group">
+              <label for="password">
+                <span style="display: flex; align-items: center; gap: 8px;">
+                  🔑 Password
+                </span>
+              </label>
+              <input type="password" id="password" name="password" class="form-input" placeholder="Enter your password"
+                required autocomplete="current-password" />
+            </div>
 
-        <button type="submit" class="login-btn">
-          <span style="position: relative; z-index: 1;">Login</span>
-        </button>
-      </form>
+            <button type="submit" class="login-btn" id="loginBtn">
+              <span
+                style="position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                Sign In
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </span>
+            </button>
+          </form>
 
-      <div class="forgot-password">
-        <a href="/forgot-password">Forgot Password?</a>
-      </div>
+          <div class="forgot-password">
+            <a href="/forgot-password">Forgot your password?</a>
+          </div>
+
+          <div style="margin-top: 30px; padding-top: 25px; border-top: 1px solid #e2e8f0; text-align: center;">
+            <p style="color: #94a3b8; font-size: 0.85rem; margin: 0;">
+              🔒 Secure authentication powered by enterprise-grade encryption
+            </p>
+          </div>
     </div>
 
     <div class="app-footer">
-      🔒 IT IS ONLY FOR PERSONAL USE OF TEACHER PALLAVI PRADHAN
+      <div style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
+        <span style="font-size: 1.1rem;">🏫 AttendancePro™ Management System</span>
+        <span style="opacity: 0.7; font-size: 0.85rem;">Designed for Teacher Pallavi Pradhan | © 2026 All Rights
+          Reserved</span>
+      </div>
     </div>
   </div>
+
+  <script>
+    // Add loading state to button on submit
+    document.getElementById('loginForm').addEventListener('submit', function () {
+      const btn = document.getElementById('loginBtn');
+      btn.innerHTML = '<span style="position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 10px;">Signing in... <span class="spinner"></span></span>';
+      btn.disabled = true;
+    });
+  </script>
 </body>
+
 </html>

@@ -4,6 +4,7 @@ const session = require('express-session');
 const bcrypt = require('bcrypt');
 const multer = require('multer');
 const xlsx = require('xlsx');
+const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const { openDb, initDb } = require('./db');
 
@@ -232,9 +233,9 @@ app.post('/admin/upload', requireRole('admin'), upload.single('students'), async
       let inserted = 0;
       for (const r of rows) {
         // detect common id & name keys
-  let sid = String(r.student_id || r.id || r.StudentID || r.StudentId || r['Student ID'] || '').trim();
-  const name = (r.name || r.Name || r.full_name || r.FullName || r['Full Name'] || r['Student Name'] || '').trim();
-  if (sid) sid = sid.toUpperCase();
+        let sid = String(r.student_id || r.id || r.StudentID || r.StudentId || r['Student ID'] || '').trim();
+        const name = (r.name || r.Name || r.full_name || r.FullName || r['Full Name'] || r['Student Name'] || '').trim();
+        if (sid) sid = sid.toUpperCase();
         if (!sid || !name) continue;
         const info = await stmt.run(sid, name);
         if (info && info.changes) inserted++;
@@ -334,7 +335,7 @@ app.get('/teacher', requireAuth, async (req, res) => {
   const students = await db.all('SELECT * FROM students ORDER BY name LIMIT ? OFFSET ?', itemsPerPage, offset);
   const canMark = req.session.user.role === 'teacher';
   // handle selected date (YYYY-MM-DD) to show attendance for that day
-  const selectedDate = req.query.date || new Date().toISOString().slice(0,10);
+  const selectedDate = req.query.date || new Date().toISOString().slice(0, 10);
   // fetch attendance for that date
   const attRows = await db.all('SELECT student_id, status FROM attendance WHERE date = ?', selectedDate);
   const attendanceMap = {};
@@ -348,8 +349,8 @@ app.get('/teacher', requireAuth, async (req, res) => {
   const daysInMonth = new Date(year, month, 0).getDate();
   const days = [];
   for (let day = 1; day <= daysInMonth; day++) {
-    const mm = String(month).padStart(2,'0');
-    const dd = String(day).padStart(2,'0');
+    const mm = String(month).padStart(2, '0');
+    const dd = String(day).padStart(2, '0');
     days.push({ date: `${year}-${mm}-${dd}`, day });
   }
 
@@ -383,7 +384,7 @@ app.post('/teacher/mark', requireRole('teacher'), async (req, res) => {
   const stmt = await db.prepare('INSERT OR REPLACE INTO attendance (student_id, date, status) VALUES (?, ?, ?)');
   try {
     await db.run('BEGIN');
-      for (const sid in statuses) {
+    for (const sid in statuses) {
       const status = statuses[sid];
       const key = String(sid).toUpperCase();
       await stmt.run(key, date, status);
@@ -422,7 +423,7 @@ app.get('/student', requireAuth, async (req, res) => {
   const students = await db.all('SELECT * FROM students ORDER BY name LIMIT ? OFFSET ?', itemsPerPage, offset);
 
   // handle selected date (YYYY-MM-DD) to show attendance for that day
-  const selectedDate = req.query.date || new Date().toISOString().slice(0,10);
+  const selectedDate = req.query.date || new Date().toISOString().slice(0, 10);
   // fetch attendance for that date
   const attRows = await db.all('SELECT student_id, status FROM attendance WHERE date = ?', selectedDate);
   const attendanceMap = {};
@@ -436,8 +437,8 @@ app.get('/student', requireAuth, async (req, res) => {
   const daysInMonth = new Date(year, month, 0).getDate();
   const days = [];
   for (let day = 1; day <= daysInMonth; day++) {
-    const mm = String(month).padStart(2,'0');
-    const dd = String(day).padStart(2,'0');
+    const mm = String(month).padStart(2, '0');
+    const dd = String(day).padStart(2, '0');
     days.push({ date: `${year}-${mm}-${dd}`, day });
   }
 
@@ -535,6 +536,247 @@ app.get('/summary', requireAuth, async (req, res) => {
     res.render('summary_student', { row: row || { presents: 0, absents: 0 }, month: m, year: y });
   } else {
     res.status(403).send('Forbidden');
+  }
+});
+
+// PDF Export - Professional Attendance Report by Date Range
+app.get('/api/export-attendance', requireAuth, async (req, res) => {
+  // Only teachers and admins can export
+  if (req.session.user.role !== 'teacher' && req.session.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  const { startDate, endDate } = req.query;
+
+  if (!startDate || !endDate) {
+    return res.status(400).json({ error: 'Start date and end date are required' });
+  }
+
+  try {
+    const db = await openDb();
+
+    // Get all students with their attendance summary for the date range
+    const rows = await db.all(`
+      SELECT 
+        s.student_id,
+        s.name,
+        SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) as days_present,
+        SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END) as days_absent,
+        COUNT(a.status) as total_marked
+      FROM students s
+      LEFT JOIN attendance a ON a.student_id = s.student_id AND a.date BETWEEN ? AND ?
+      GROUP BY s.student_id, s.name
+      ORDER BY s.name
+    `, startDate, endDate);
+
+    // Create PDF document
+    const doc = new PDFDocument({
+      margin: 40,
+      size: 'A4',
+      info: {
+        Title: 'Attendance Report',
+        Author: 'AttendancePro™',
+        Subject: `Attendance Report from ${startDate} to ${endDate}`
+      }
+    });
+
+    // Set response headers
+    const filename = `Attendance_Report_${startDate}_to_${endDate}.pdf`;
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    // Pipe the PDF to the response
+    doc.pipe(res);
+
+    // Colors
+    const primaryColor = '#6366f1';
+    const successColor = '#10b981';
+    const dangerColor = '#f43f5e';
+    const darkColor = '#1e293b';
+    const grayColor = '#64748b';
+    const lightGray = '#f1f5f9';
+
+    // Header Section with gradient-like background
+    doc.rect(0, 0, 595, 120).fill(primaryColor);
+
+    // Title
+    doc.fontSize(28)
+      .fillColor('white')
+      .font('Helvetica-Bold')
+      .text('ATTENDANCE PRO™', 40, 35, { align: 'center' });
+
+    doc.fontSize(12)
+      .fillColor('white')
+      .font('Helvetica')
+      .text('Professional Attendance Management System', 40, 70, { align: 'center' });
+
+    doc.fontSize(10)
+      .text('By Pallav Pradhan | Version 3.0', 40, 90, { align: 'center' });
+
+    // Report Info Box
+    doc.roundedRect(40, 140, 515, 80, 8)
+      .fill(lightGray);
+
+    doc.fontSize(18)
+      .fillColor(primaryColor)
+      .font('Helvetica-Bold')
+      .text('ATTENDANCE REPORT', 60, 155);
+
+    doc.fontSize(11)
+      .fillColor(grayColor)
+      .font('Helvetica');
+
+    doc.text(`Report Period:`, 60, 180);
+    doc.fillColor(darkColor).font('Helvetica-Bold')
+      .text(`${startDate} to ${endDate}`, 150, 180);
+
+    doc.fillColor(grayColor).font('Helvetica')
+      .text(`Generated:`, 320, 180);
+    doc.fillColor(darkColor).font('Helvetica-Bold')
+      .text(`${new Date().toLocaleDateString()}`, 390, 180);
+
+    doc.fillColor(grayColor).font('Helvetica')
+      .text(`Total Students:`, 60, 200);
+    doc.fillColor(darkColor).font('Helvetica-Bold')
+      .text(`${rows.length}`, 150, 200);
+
+    // Calculate totals
+    let totalPresent = 0;
+    let totalAbsent = 0;
+    rows.forEach(row => {
+      totalPresent += row.days_present || 0;
+      totalAbsent += row.days_absent || 0;
+    });
+
+    doc.fillColor(grayColor).font('Helvetica')
+      .text(`Total Present Days:`, 320, 200);
+    doc.fillColor(successColor).font('Helvetica-Bold')
+      .text(`${totalPresent}`, 430, 200);
+
+    doc.fillColor(grayColor).font('Helvetica')
+      .text(`Total Absent Days:`, 460, 200);
+    doc.fillColor(dangerColor).font('Helvetica-Bold')
+      .text(`${totalAbsent}`, 555, 200);
+
+    // Table Header
+    const tableTop = 245;
+    const tableLeft = 40;
+    const colWidths = [35, 70, 160, 65, 60, 60, 65];
+
+    // Table header background
+    doc.rect(tableLeft, tableTop, 515, 28).fill(primaryColor);
+
+    // Table headers
+    doc.fontSize(9)
+      .fillColor('white')
+      .font('Helvetica-Bold');
+
+    let xPos = tableLeft + 8;
+    const headers = ['S.No', 'Student ID', 'Student Name', 'Present', 'Absent', 'Total', 'Attendance'];
+    headers.forEach((header, i) => {
+      doc.text(header, xPos, tableTop + 9, { width: colWidths[i] - 10, align: 'left' });
+      xPos += colWidths[i];
+    });
+
+    // Table rows
+    let yPos = tableTop + 28;
+    const rowHeight = 24;
+
+    rows.forEach((row, index) => {
+      // Check if we need a new page
+      if (yPos > 750) {
+        doc.addPage();
+        yPos = 50;
+
+        // Add table header on new page
+        doc.rect(tableLeft, yPos, 515, 28).fill(primaryColor);
+        doc.fontSize(9).fillColor('white').font('Helvetica-Bold');
+        let headerX = tableLeft + 8;
+        headers.forEach((header, i) => {
+          doc.text(header, headerX, yPos + 9, { width: colWidths[i] - 10, align: 'left' });
+          headerX += colWidths[i];
+        });
+        yPos += 28;
+      }
+
+      // Alternate row background
+      if (index % 2 === 0) {
+        doc.rect(tableLeft, yPos, 515, rowHeight).fill('#f8fafc');
+      } else {
+        doc.rect(tableLeft, yPos, 515, rowHeight).fill('white');
+      }
+
+      // Row border
+      doc.rect(tableLeft, yPos, 515, rowHeight).stroke('#e2e8f0');
+
+      // Calculate percentage
+      const total = (row.days_present || 0) + (row.days_absent || 0);
+      const percentage = total > 0 ? ((row.days_present / total) * 100).toFixed(1) : '0.0';
+
+      // Row data
+      doc.fontSize(9).font('Helvetica').fillColor(darkColor);
+
+      let cellX = tableLeft + 8;
+
+      // S.No
+      doc.text((index + 1).toString(), cellX, yPos + 8, { width: colWidths[0] - 10 });
+      cellX += colWidths[0];
+
+      // Student ID
+      doc.font('Helvetica-Bold').fillColor(primaryColor)
+        .text(row.student_id, cellX, yPos + 8, { width: colWidths[1] - 10 });
+      cellX += colWidths[1];
+
+      // Student Name
+      doc.font('Helvetica').fillColor(darkColor)
+        .text(row.name, cellX, yPos + 8, { width: colWidths[2] - 10 });
+      cellX += colWidths[2];
+
+      // Days Present
+      doc.fillColor(successColor).font('Helvetica-Bold')
+        .text((row.days_present || 0).toString(), cellX, yPos + 8, { width: colWidths[3] - 10 });
+      cellX += colWidths[3];
+
+      // Days Absent
+      doc.fillColor(dangerColor).font('Helvetica-Bold')
+        .text((row.days_absent || 0).toString(), cellX, yPos + 8, { width: colWidths[4] - 10 });
+      cellX += colWidths[4];
+
+      // Total
+      doc.fillColor(grayColor).font('Helvetica')
+        .text((row.total_marked || 0).toString(), cellX, yPos + 8, { width: colWidths[5] - 10 });
+      cellX += colWidths[5];
+
+      // Attendance Percentage with color coding
+      const pctValue = parseFloat(percentage);
+      let pctColor = dangerColor;
+      if (pctValue >= 75) pctColor = successColor;
+      else if (pctValue >= 50) pctColor = '#f59e0b';
+
+      doc.fillColor(pctColor).font('Helvetica-Bold')
+        .text(`${percentage}%`, cellX, yPos + 8, { width: colWidths[6] - 10 });
+
+      yPos += rowHeight;
+    });
+
+    // Footer
+    const footerY = Math.min(yPos + 30, 780);
+
+    doc.fontSize(9)
+      .fillColor(grayColor)
+      .font('Helvetica')
+      .text('This report was automatically generated by AttendancePro™ Management System',
+        40, footerY, { align: 'center', width: 515 });
+
+    doc.text('© 2026 Designed for Teacher Pallavi Pradhan | All Rights Reserved',
+      40, footerY + 15, { align: 'center', width: 515 });
+
+    // Finalize the PDF
+    doc.end();
+
+  } catch (error) {
+    console.error('Error generating attendance report:', error);
+    res.status(500).json({ error: 'Error generating report' });
   }
 });
 
